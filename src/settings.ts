@@ -41,7 +41,7 @@ export function registerSettings(onOrbsChange: () => void): void {
     name: "ORBHUD.Settings.GmView.Name",
     hint: "ORBHUD.Settings.GmView.Hint",
     scope: "client",
-    config: game.user.isGM,
+    config: true, // game.user doesn't exist yet during init; the setting is simply a no-op for players
     type: Boolean,
     default: true,
     onChange: () => {

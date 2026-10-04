@@ -6,7 +6,7 @@
   "ORBHUD.Settings.HotbarMode.Hide": "Hide it",
   "ORBHUD.Settings.HotbarMode.None": "Leave it alone",
   "ORBHUD.Settings.GmView.Name": "Show the HUD for the GM",
-  "ORBHUD.Settings.GmView.Hint": "The GM sees the HUD for whichever token they select. Turn it off to hide it. You can also toggle it from the token controls.",
+  "ORBHUD.Settings.GmView.Hint": "GM only: the GM sees the HUD for whichever token they select. Turn it off to hide it. You can also toggle it from the token controls.",
   "ORBHUD.Controls.Toggle": "Toggle Orb HUD",
   "ORBHUD.Settings.Position.Name": "HUD position",
   "ORBHUD.Settings.Position.Hint": "Dock the HUD to the bottom or the top of the screen. At the top, the core hotbar is not moved.",
