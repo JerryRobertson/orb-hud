@@ -27,6 +27,7 @@
   {{/each}}
 
   <footer class="orb-hud-cfg__footer">
+    {{#if canDefaults}}<button type="button" data-action="defaults"><i class="fa-solid fa-arrow-rotate-left"></i> {{localize "ORBHUD.Config.Defaults"}}</button>{{/if}}
     {{#if canReset}}<button type="button" data-action="reset"><i class="fa-solid fa-rotate-left"></i> {{localize "ORBHUD.Config.Reset"}}</button>{{/if}}
     <button type="button" data-action="save"><i class="fa-solid fa-floppy-disk"></i> {{localize "ORBHUD.Config.Save"}}</button>
   </footer>

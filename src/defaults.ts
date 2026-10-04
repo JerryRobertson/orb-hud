@@ -24,15 +24,16 @@ const BY_SYSTEM: Record<string, OrbSettings> = {
   },
   "heroes-unlimited": {
     red: {
-      label: "HP", color: RED, main: hp("hp.value", "hp.max"),
-      shields: [{ ...hp("sdc.value", "sdc.max"), label: "S.D.C." }],
+      // HU keeps class/power/skill bonuses in derived totals (_total*Max); "hp.max" is only the base box.
+      label: "HP", color: RED, main: hp("hp.value", "_totalHpMax|hp.max"),
+      shields: [{ ...hp("sdc.value", "_totalSdcMax|sdc.max"), label: "S.D.C." }],
       shieldColor: SHIELD,
       // Worn armor belongs to the gear, not the person, so it's a gauge above the orb rather than shield.
       gauges: [
         { kind: "itemPool", itemType: "armor", valuePath: "sdc.value", maxPath: "sdc.max", activeWhen: "equipped,isNatural", label: "Armour" }
       ]
     },
-    blue: { label: "P.P.E.", color: BLUE, main: hp("ppe.value", "ppe.max") }
+    blue: { label: "P.P.E.", color: BLUE, main: hp("ppe.value", "_totalPpeMax|ppe.max") }
   }
 };
 

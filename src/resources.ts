@@ -45,8 +45,13 @@ export function readSource(actor: any, source: ResourceSource): ResourceReading 
     const value = num(foundry.utils.getProperty(actor.system, source.valuePath));
     if (value === null) return null;
     if (!source.maxPath) return { value };
-    const max = num(foundry.utils.getProperty(actor.system, source.maxPath));
-    return max === null ? { value } : { value, max };
+    // maxPath may list fallbacks separated by "|"; the first one that exists wins
+    // (e.g. a derived total, then the base value).
+    for (const path of source.maxPath.split("|")) {
+      const max = num(foundry.utils.getProperty(actor.system, path.trim()));
+      if (max !== null) return { value, max };
+    }
+    return { value };
   }
   if (source.kind === "itemPool") {
     const gates = (source.activeWhen ?? "").split(",").map((p) => p.trim()).filter(Boolean);

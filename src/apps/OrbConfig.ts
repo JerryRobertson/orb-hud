@@ -2,6 +2,7 @@ import { MODULE_ID } from "../constants";
 import { resolveActor } from "../actor-resolver";
 import { editableOrbs, getOrbSettings, getWorldOrbs } from "../orb-settings";
 import { getAdapter } from "../adapters";
+import { getSystemDefaults } from "../defaults";
 import { readSource, type OrbConfig, type OrbKey, type ResourceSource } from "../resources";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -15,6 +16,8 @@ interface Group { label: string; options: Option[] }
 
 const emptyRow = (): ResourceSource => ({ kind: "attribute", valuePath: "", maxPath: "" });
 const joinPath = (p: unknown): string => (Array.isArray(p) ? p.join(".") : String(p));
+/** Max path for a tracked bar: the system's effective total if its adapter has one, else `<bar>.max`. */
+const barMaxPath = (bar: string): string => getAdapter().barMax?.(bar) ?? `${bar}.max`;
 
 export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
@@ -26,6 +29,7 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
     actions: {
       addShield: OrbConfigApp.#onAddShield,
       removeShield: OrbConfigApp.#onRemoveShield,
+      defaults: OrbConfigApp.#onDefaults,
       addGauge: OrbConfigApp.#onAddGauge,
       removeGauge: OrbConfigApp.#onRemoveGauge,
       save: OrbConfigApp.#onSave,
@@ -90,8 +94,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       );
       current = match ? `preset:${match.id}` : "pool";
     } else if (row.kind === "itemUses") current = `item:${row.itemName}`;
-    else if (row.maxPath && row.valuePath === `${row.maxPath.replace(/\.max$/, "")}.value` && tracked.bars.includes(row.maxPath.replace(/\.max$/, "")))
-      current = `bar:${row.maxPath.replace(/\.max$/, "")}`;
+    else if (row.maxPath && tracked.bars.some((p) => row.valuePath === `${p}.value` && row.maxPath === barMaxPath(p)))
+      current = `bar:${tracked.bars.find((p) => row.valuePath === `${p}.value` && row.maxPath === barMaxPath(p))}`;
     else if (!row.maxPath && tracked.values.includes(row.valuePath)) current = `val:${row.valuePath}`;
 
     const opt = (value: string, label: string): Option => ({ value, label, selected: value === current });
@@ -158,6 +162,7 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       scopeNote: this.actor
         ? game.i18n.format("ORBHUD.Config.ActorScope", { name: this.actor.name })
         : game.i18n.localize("ORBHUD.Config.WorldScope"),
+      canDefaults: !this.actor,
       canReset: !!this.actor && !!this.actor.getFlag(MODULE_ID, "orbs")
     };
   }
@@ -227,7 +232,7 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const isPool = pick.value === "pool" || type === "preset";
         vp.hidden = mp.hidden = isItem;
         it.hidden = aw.hidden = !isPool;
-        if (type === "bar") { vp.value = `${val}.value`; mp.value = `${val}.max`; }
+        if (type === "bar") { vp.value = `${val}.value`; mp.value = barMaxPath(val); }
         else if (type === "val") { vp.value = val; mp.value = ""; }
         else if (type === "preset") {
           const preset = (getAdapter().poolPresets ?? []).find((p) => p.id === val);
@@ -255,6 +260,12 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static #onRemoveShield(this: OrbConfigApp, _ev: Event, target: HTMLElement): void {
     this.#capture();
     this.#form.red.shields?.splice(Number(target.dataset.idx), 1);
+    void this.render();
+  }
+
+  /** Loads this system's starting config into the form (nothing is saved until the GM clicks Save). */
+  static #onDefaults(this: OrbConfigApp): void {
+    this.#form = getSystemDefaults() as Record<OrbKey, OrbConfig>;
     void this.render();
   }
 

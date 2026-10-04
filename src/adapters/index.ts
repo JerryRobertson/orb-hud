@@ -23,6 +23,11 @@ export interface PoolPreset {
 }
 
 export interface Adapter {
+  /**
+   * Max path to use when the GM picks a tracked bar. Systems that add bonuses in derived data
+   * (so the "base" `<bar>.max` is too low) return their effective-total path; null means `<bar>.max`.
+   */
+  barMax?(bar: string): string | null;
   /** Item-pool shortcuts shown in the shield source dropdown (e.g. worn armor S.D.C.). */
   poolPresets?: PoolPreset[];
   /** Turns system-specific drag data (e.g. PF2e strikes) into a slot entry, or null if unsupported. */

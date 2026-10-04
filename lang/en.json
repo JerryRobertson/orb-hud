@@ -57,6 +57,7 @@
   "ORBHUD.Config.ItemUses": "Item uses",
   "ORBHUD.Config.ValuePath": "value path",
   "ORBHUD.Config.MaxPath": "max path (optional)",
+  "ORBHUD.Config.Defaults": "Reset to system defaults",
   "ORBHUD.Config.Gauges": "Gauges (shown above the orb)",
   "ORBHUD.Config.GaugesHint": "Labelled mini-bars for values that belong to gear, such as worn armor. They show when the orb numbers show and don't count toward the shield.",
   "ORBHUD.Config.AddGauge": "Add gauge",
