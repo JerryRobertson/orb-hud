@@ -8,7 +8,12 @@
   </select>
   <input type="text" data-field="valuePath" value="{{valuePath}}" placeholder="{{localize 'ORBHUD.Config.ValuePath'}}" {{#if isItem}}hidden{{/if}}>
   <input type="text" data-field="maxPath" value="{{maxPath}}" placeholder="{{localize 'ORBHUD.Config.MaxPath'}}" {{#if isItem}}hidden{{/if}}>
-  {{#if isShield}}<input type="text" data-field="label" value="{{label}}" placeholder="{{localize 'ORBHUD.Config.ShieldLabel'}}">{{/if}}
+  {{#if hasLabel}}<input type="text" data-field="label" value="{{label}}" placeholder="{{labelHint}}">{{/if}}
   <span class="orb-hud-cfg__live" data-field="live">{{live}}</span>
   {{#if isShield}}<button type="button" data-action="removeShield" data-idx="{{idx}}" title="{{localize 'ORBHUD.Config.Remove'}}"><i class="fa-solid fa-trash"></i></button>{{/if}}
+  {{#if isGauge}}<button type="button" data-action="removeGauge" data-orb="{{orb}}" data-idx="{{idx}}" title="{{localize 'ORBHUD.Config.Remove'}}"><i class="fa-solid fa-trash"></i></button>{{/if}}
+  <div class="orb-hud-cfg__pool">
+    <input type="text" data-field="itemType" value="{{itemType}}" placeholder="{{localize 'ORBHUD.Config.ItemType'}}" {{#unless isPool}}hidden{{/unless}}>
+    <input type="text" data-field="activeWhen" value="{{activeWhen}}" placeholder="{{localize 'ORBHUD.Config.ActiveWhen'}}" {{#unless isPool}}hidden{{/unless}}>
+  </div>
 </div>

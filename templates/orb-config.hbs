@@ -19,6 +19,10 @@
     {{#each shields}}{{> "modules/orb-hud/templates/source-row.hbs" this}}{{/each}}
     <button type="button" data-action="addShield"><i class="fa-solid fa-plus"></i> {{localize "ORBHUD.Config.AddShield"}}</button>
     {{/if}}
+    <h4>{{localize "ORBHUD.Config.Gauges"}}</h4>
+    <p class="orb-hud-cfg__note">{{localize "ORBHUD.Config.GaugesHint"}}</p>
+    {{#each gauges}}{{> "modules/orb-hud/templates/source-row.hbs" this}}{{/each}}
+    <button type="button" data-action="addGauge" data-orb="{{key}}"><i class="fa-solid fa-plus"></i> {{localize "ORBHUD.Config.AddGauge"}}</button>
   </fieldset>
   {{/each}}
 

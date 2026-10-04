@@ -17,6 +17,13 @@ interface OrbView {
   text: string;
   tooltip: string;
   shield?: { pct: number; width: string; color: string; active: boolean; lines: string[] };
+  gauges: GaugeView[];
+}
+
+interface GaugeView {
+  label: string;
+  text: string;
+  pct: number;
 }
 
 interface HudState {
@@ -63,7 +70,15 @@ function buildOrb(actor: any, cfg: OrbConfig): OrbView | null {
     const width = total <= 0 ? "0%" : `${Math.max(12, spct * 1.12).toFixed(1)}%`;
     shield = { pct: spct, width, color: cfg.shieldColor || "#7fd4ff", active: total > 0, lines: shieldLines };
   }
-  return { label: cfg.label, color: cfg.color, pct, counter, text, tooltip: lines.join("\n"), shield };
+  const gauges: GaugeView[] = [];
+  for (const src of cfg.gauges ?? []) {
+    const g = readSource(actor, src);
+    if (!g) continue; // e.g. no armor worn: the gauge hides
+    const gpct = g.max === undefined ? 100 : g.max > 0 ? Math.min(100, Math.max(0, (g.value / g.max) * 100)) : 0;
+    gauges.push({ label: src.label || "Gauge", text: g.max === undefined ? `${g.value}` : `${g.value} / ${g.max}`, pct: gpct });
+    lines.push(fmt(src.label || "Gauge", g));
+  }
+  return { label: cfg.label, color: cfg.color, pct, counter, text, tooltip: lines.join("\n"), shield, gauges };
 }
 
 export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -96,7 +111,7 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static #orbSigOf(s: HudState): string {
-    const o = (v: OrbView | null) => (v ? `${v.label}|${v.color}|${v.counter}|${v.shield?.color ?? ""}` : "-");
+    const o = (v: OrbView | null) => (v ? `${v.label}|${v.color}|${v.counter}|${v.shield?.color ?? ""}|${v.gauges.map((g) => g.label).join(",")}` : "-");
     return `${s.actor?.uuid ?? "-"}::${o(s.red)}::${o(s.blue)}`;
   }
 
@@ -292,6 +307,14 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
       if (!view || !el) continue;
       el.style.setProperty("--fill", String(view.pct));
       el.title = view.tooltip;
+      const wrap = el.closest(".orb-hud__orbwrap");
+      view.gauges.forEach((g, i) => {
+        const ge = wrap?.querySelector<HTMLElement>(`[data-gauge="${i}"]`);
+        if (!ge) return;
+        ge.style.setProperty("--gauge-fill", String(g.pct));
+        const text = ge.querySelector(".orb-hud__gauge-text");
+        if (text) text.textContent = `${g.label}: ${g.text}`;
+      });
       const main = el.querySelector(".orb-hud__num-main");
       if (main) main.textContent = view.text;
       const box = el.querySelector(".orb-hud__num-shields");

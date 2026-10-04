@@ -1,13 +1,14 @@
 import { MODULE_ID } from "../constants";
 import { resolveActor } from "../actor-resolver";
 import { editableOrbs, getOrbSettings, getWorldOrbs } from "../orb-settings";
+import { getAdapter } from "../adapters";
 import { readSource, type OrbConfig, type OrbKey, type ResourceSource } from "../resources";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const ROW_PARTIAL = "modules/orb-hud/templates/source-row.hbs";
 
-type Role = "main" | "shield";
+type Role = "main" | "shield" | "gauge";
 
 interface Option { value: string; label: string; selected: boolean }
 interface Group { label: string; options: Option[] }
@@ -25,6 +26,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
     actions: {
       addShield: OrbConfigApp.#onAddShield,
       removeShield: OrbConfigApp.#onRemoveShield,
+      addGauge: OrbConfigApp.#onAddGauge,
+      removeGauge: OrbConfigApp.#onRemoveGauge,
       save: OrbConfigApp.#onSave,
       reset: OrbConfigApp.#onReset
     }
@@ -75,8 +78,18 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       .map((i: any) => i.name);
     if (row.kind === "itemUses" && !items.includes(row.itemName)) items.push(row.itemName);
 
+    const presets = getAdapter().poolPresets ?? [];
     let current = "custom";
-    if (row.kind === "itemUses") current = `item:${row.itemName}`;
+    if (row.kind === "itemPool") {
+      const match = presets.find(
+        (p) =>
+          p.source.itemType === row.itemType &&
+          p.source.valuePath === row.valuePath &&
+          (p.source.maxPath ?? "") === (row.maxPath ?? "") &&
+          (p.source.activeWhen ?? "") === (row.activeWhen ?? "")
+      );
+      current = match ? `preset:${match.id}` : "pool";
+    } else if (row.kind === "itemUses") current = `item:${row.itemName}`;
     else if (row.maxPath && row.valuePath === `${row.maxPath.replace(/\.max$/, "")}.value` && tracked.bars.includes(row.maxPath.replace(/\.max$/, "")))
       current = `bar:${row.maxPath.replace(/\.max$/, "")}`;
     else if (!row.maxPath && tracked.values.includes(row.valuePath)) current = `val:${row.valuePath}`;
@@ -86,7 +99,14 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       { label: game.i18n.localize("ORBHUD.Config.Other"), options: [opt("custom", game.i18n.localize("ORBHUD.Config.CustomPath"))] },
       { label: game.i18n.localize("ORBHUD.Config.TrackedBars"), options: tracked.bars.map((p) => opt(`bar:${p}`, p)) },
       { label: game.i18n.localize("ORBHUD.Config.TrackedValues"), options: tracked.values.map((p) => opt(`val:${p}`, p)) },
-      { label: game.i18n.localize("ORBHUD.Config.ItemUses"), options: items.map((n) => opt(`item:${n}`, n)) }
+      { label: game.i18n.localize("ORBHUD.Config.ItemUses"), options: items.map((n) => opt(`item:${n}`, n)) },
+      {
+        label: game.i18n.localize("ORBHUD.Config.ItemPools"),
+        options: [
+          ...presets.map((p) => opt(`preset:${p.id}`, p.label)),
+          opt("pool", game.i18n.localize("ORBHUD.Config.CustomPool"))
+        ]
+      }
     ].filter((g) => g.options.length);
   }
 
@@ -102,9 +122,15 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       orb, role, idx,
       groups: this.#groups(row, tracked),
       isItem: row.kind === "itemUses",
+      isPool: row.kind === "itemPool",
       isShield: role === "shield",
-      valuePath: row.kind === "attribute" ? row.valuePath : "",
-      maxPath: row.kind === "attribute" ? row.maxPath ?? "" : "",
+      isGauge: role === "gauge",
+      hasLabel: role !== "main",
+      labelHint: game.i18n.localize(role === "gauge" ? "ORBHUD.Config.GaugeLabel" : "ORBHUD.Config.ShieldLabel"),
+      valuePath: row.kind === "attribute" || row.kind === "itemPool" ? row.valuePath : "",
+      maxPath: row.kind === "attribute" || row.kind === "itemPool" ? row.maxPath ?? "" : "",
+      itemType: row.kind === "itemPool" ? row.itemType : "",
+      activeWhen: row.kind === "itemPool" ? row.activeWhen ?? "" : "",
       label: row.label ?? "",
       live: this.#live(row)
     };
@@ -122,7 +148,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
         color: cfg.color,
         shieldColor: cfg.shieldColor ?? "#7fd4ff",
         main: this.#rowCtx(cfg.main, key, "main", 0, tracked),
-        shields: (cfg.shields ?? []).map((s, i) => this.#rowCtx(s, key, "shield", i, tracked))
+        shields: (cfg.shields ?? []).map((s, i) => this.#rowCtx(s, key, "shield", i, tracked)),
+        gauges: (cfg.gauges ?? []).map((g, i) => this.#rowCtx(g, key, "gauge", i, tracked))
       };
     });
     return {
@@ -149,6 +176,18 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (pick.startsWith("item:")) return { kind: "itemUses", itemName: pick.slice(5), ...base };
     const valuePath = q("valuePath").value.trim();
     const maxPath = q("maxPath").value.trim();
+    if (pick === "pool" || pick.startsWith("preset:")) {
+      const itemType = q("itemType").value.trim();
+      const activeWhen = q("activeWhen").value.trim();
+      return {
+        kind: "itemPool",
+        itemType,
+        valuePath,
+        ...(maxPath ? { maxPath } : {}),
+        ...(activeWhen ? { activeWhen } : {}),
+        ...base
+      };
+    }
     return { kind: "attribute", valuePath, ...(maxPath ? { maxPath } : {}), ...base };
   }
 
@@ -161,6 +200,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       cfg.label = field("label")?.value.trim() || cfg.label;
       cfg.color = field("color")?.value || cfg.color;
       cfg.main = this.#readRow(root.querySelector<HTMLElement>(`[data-row][data-orb="${key}"][data-role="main"]`)!);
+      const gauges = [...root.querySelectorAll<HTMLElement>(`[data-row][data-orb="${key}"][data-role="gauge"]`)].map((r) => this.#readRow(r));
+      if (gauges.length || cfg.gauges) cfg.gauges = gauges; // don't add an empty list the world default doesn't have
       if (key === "red") {
         cfg.shieldColor = field("shieldColor")?.value || cfg.shieldColor;
         cfg.shields = [...root.querySelectorAll<HTMLElement>(`[data-row][data-orb="red"][data-role="shield"]`)].map((r) => this.#readRow(r));
@@ -174,6 +215,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const pick = row.querySelector<HTMLSelectElement>('[data-field="pick"]')!;
       const vp = row.querySelector<HTMLInputElement>('[data-field="valuePath"]')!;
       const mp = row.querySelector<HTMLInputElement>('[data-field="maxPath"]')!;
+      const it = row.querySelector<HTMLInputElement>('[data-field="itemType"]')!;
+      const aw = row.querySelector<HTMLInputElement>('[data-field="activeWhen"]')!;
       const live = row.querySelector<HTMLElement>('[data-field="live"]')!;
       const update = () => (live.textContent = this.#live(this.#readRow(row)));
 
@@ -181,13 +224,23 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const [type, ...rest] = pick.value.split(":");
         const val = rest.join(":");
         const isItem = type === "item";
+        const isPool = pick.value === "pool" || type === "preset";
         vp.hidden = mp.hidden = isItem;
+        it.hidden = aw.hidden = !isPool;
         if (type === "bar") { vp.value = `${val}.value`; mp.value = `${val}.max`; }
         else if (type === "val") { vp.value = val; mp.value = ""; }
+        else if (type === "preset") {
+          const preset = (getAdapter().poolPresets ?? []).find((p) => p.id === val);
+          if (preset) {
+            it.value = preset.source.itemType;
+            vp.value = preset.source.valuePath;
+            mp.value = preset.source.maxPath ?? "";
+            aw.value = preset.source.activeWhen ?? "";
+          }
+        }
         update();
       });
-      vp.addEventListener("input", update);
-      mp.addEventListener("input", update);
+      for (const input of [vp, mp, it, aw]) input.addEventListener("input", update);
     }
   }
 
@@ -202,6 +255,19 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static #onRemoveShield(this: OrbConfigApp, _ev: Event, target: HTMLElement): void {
     this.#capture();
     this.#form.red.shields?.splice(Number(target.dataset.idx), 1);
+    void this.render();
+  }
+
+  static #onAddGauge(this: OrbConfigApp, _ev: Event, target: HTMLElement): void {
+    this.#capture();
+    const cfg = this.#form[target.dataset.orb as OrbKey];
+    (cfg.gauges ??= []).push(emptyRow());
+    void this.render();
+  }
+
+  static #onRemoveGauge(this: OrbConfigApp, _ev: Event, target: HTMLElement): void {
+    this.#capture();
+    this.#form[target.dataset.orb as OrbKey].gauges?.splice(Number(target.dataset.idx), 1);
     void this.render();
   }
 

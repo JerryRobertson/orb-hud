@@ -295,3 +295,60 @@ body.orb-hud-always-numbers .orb-hud__num { opacity: 1; }
   color: #ccc;
   font-variant-numeric: tabular-nums;
 }
+
+.orb-hud-cfg__row { flex-wrap: wrap; }
+.orb-hud-cfg__pool { display: flex; flex: 1 1 100%; gap: 0.4rem; }
+.orb-hud-cfg__pool input { flex: 1; min-width: 0; }
+.orb-hud-cfg__pool:not(:has(input:not([hidden]))) { display: none; }
+
+/* ---- Gauges (labelled mini-bars above an orb, e.g. worn armor) ---------------------------- */
+
+:root { --orb-hud-gauge: #3b82f6; }
+
+.orb-hud__orbwrap { position: relative; flex: none; }
+
+.orb-hud__gauges {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: max(100%, 110px);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+}
+body.orb-hud-top .orb-hud__gauges { bottom: auto; top: calc(100% + 4px); }
+
+/* Shown whenever the orb numbers are shown. */
+.orb-hud__orbwrap:hover .orb-hud__gauges,
+body.orb-hud-always-numbers .orb-hud__gauges { opacity: 1; }
+
+.orb-hud__gauge-text {
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1.2;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+}
+.orb-hud__gauge-bar {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid color-mix(in srgb, var(--orb-hud-gauge) 60%, black);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.orb-hud__gauge-bar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--gauge-fill, 0) * 1%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--orb-hud-gauge) 70%, white), var(--orb-hud-gauge));
+  transition: width var(--orb-hud-fill-duration) ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-hud__gauge-bar i { transition: none; }
+}
