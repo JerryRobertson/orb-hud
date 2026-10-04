@@ -11,11 +11,32 @@ let hud: OrbHud | undefined;
 Hooks.once("init", () => {
   console.log(`${MODULE_ID} | init`);
   registerSettings(() => hud?.refresh());
+  registerSceneControl();
   registerKeybinds((index, event) => hud?.useSlot(index, event) ?? false);
   void foundry.applications.handlebars.loadTemplates([
     "modules/orb-hud/templates/source-row.hbs"
   ]);
 });
+
+/** GM-only toggle in the token controls: show or hide the HUD for the GM. */
+function registerSceneControl(): void {
+  Hooks.on("getSceneControlButtons", (controls: any) => {
+    if (!game.user.isGM) return;
+    const tokens = Array.isArray(controls) ? controls.find((c: any) => c.name === "tokens") : controls.tokens;
+    if (!tokens) return;
+    const tool = {
+      name: "orbHud",
+      title: "ORBHUD.Controls.Toggle",
+      icon: "fa-solid fa-circle-half-stroke",
+      toggle: true,
+      active: game.settings.get(MODULE_ID, "gmView"),
+      order: 99,
+      onChange: (_event: unknown, active: boolean) => game.settings.set(MODULE_ID, "gmView", active)
+    };
+    if (Array.isArray(tokens.tools)) tokens.tools.push(tool);
+    else tokens.tools.orbHud = tool;
+  });
+}
 
 /** Adds an "Orb HUD" button to actor sheets (ApplicationV2 and legacy v1 sheets). */
 function registerSheetButtons(): void {

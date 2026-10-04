@@ -37,6 +37,19 @@ export function registerSettings(onOrbsChange: () => void): void {
     onChange: (mode: HotbarMode) => applyHotbarMode(mode)
   });
 
+  game.settings.register(MODULE_ID, "gmView", {
+    name: "ORBHUD.Settings.GmView.Name",
+    hint: "ORBHUD.Settings.GmView.Hint",
+    scope: "client",
+    config: game.user.isGM,
+    type: Boolean,
+    default: true,
+    onChange: () => {
+      (game.modules.get(MODULE_ID) as any).api?.hud?.refresh();
+      ui.controls?.render();
+    }
+  });
+
   game.settings.register(MODULE_ID, "position", {
     name: "ORBHUD.Settings.Position.Name",
     hint: "ORBHUD.Settings.Position.Hint",
