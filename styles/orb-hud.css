@@ -26,12 +26,20 @@
 }
 #orb-hud.orb-hud--hidden { display: none; }
 
+/* Docked to the top: flip the anchor so the bar and orbs track the top edge. */
+body.orb-hud-top #orb-hud {
+  top: 0;
+  bottom: auto;
+  align-items: flex-start;
+  transform-origin: top center;
+}
+
 #orb-hud .orb-hud__orb,
 #orb-hud .orb-hud__bar { pointer-events: auto; }
 
 /* Core hotbar handling (client setting "hotbarMode") */
 body.orb-hud-hide-hotbar #hotbar { display: none; }
-body.orb-hud-shift-hotbar #hotbar {
+body.orb-hud-shift-hotbar:not(.orb-hud-top) #hotbar {
   transform: translateY(calc(-1 * (var(--orb-hud-size) + 1rem) * var(--orb-hud-scale)));
 }
 

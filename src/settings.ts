@@ -17,6 +17,10 @@ function applyScale(percent: number): void {
   document.documentElement.style.setProperty("--orb-hud-scale", String(percent / 100));
 }
 
+function applyPosition(position: "bottom" | "top"): void {
+  document.body.classList.toggle("orb-hud-top", position === "top");
+}
+
 export function registerSettings(onOrbsChange: () => void): void {
   game.settings.register(MODULE_ID, "hotbarMode", {
     name: "ORBHUD.Settings.HotbarMode.Name",
@@ -31,6 +35,24 @@ export function registerSettings(onOrbsChange: () => void): void {
       none: "ORBHUD.Settings.HotbarMode.None"
     },
     onChange: (mode: HotbarMode) => applyHotbarMode(mode)
+  });
+
+  game.settings.register(MODULE_ID, "position", {
+    name: "ORBHUD.Settings.Position.Name",
+    hint: "ORBHUD.Settings.Position.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    default: "bottom",
+    choices: {
+      bottom: "ORBHUD.Settings.Position.Bottom",
+      top: "ORBHUD.Settings.Position.Top"
+    },
+    onChange: (position: "bottom" | "top") => {
+      applyPosition(position);
+      // Re-render so the bar's tooltips open away from the nearest screen edge.
+      void (game.modules.get(MODULE_ID) as any).api?.hud?.render({ force: true });
+    }
   });
 
   game.settings.register(MODULE_ID, "scale", {
@@ -87,6 +109,7 @@ export function registerSettings(onOrbsChange: () => void): void {
 }
 
 export function applyClientSettings(): void {
+  applyPosition(game.settings.get(MODULE_ID, "position") as "bottom" | "top");
   applyScale(game.settings.get(MODULE_ID, "scale") as number);
   applyAlwaysNumbers(game.settings.get(MODULE_ID, "alwaysNumbers") as boolean);
   applyHotbarMode(game.settings.get(MODULE_ID, "hotbarMode") as HotbarMode);

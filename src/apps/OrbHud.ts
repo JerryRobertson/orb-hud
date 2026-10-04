@@ -1,4 +1,5 @@
 import { resolveActor } from "../actor-resolver";
+import { MODULE_ID } from "../constants";
 import { editableOrbs, getOrbSettings } from "../orb-settings";
 import { readSource, type OrbConfig, type ResourceSource } from "../resources";
 import { OrbConfigApp } from "./OrbConfig";
@@ -100,7 +101,8 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
     const parts: PartId[] = options?.parts ?? ["red", "bar", "blue"];
     if (parts.includes("red") || parts.includes("blue")) this.#orbSig = OrbHud.#orbSigOf(s);
     if (parts.includes("bar")) this.#barSig = OrbHud.#barSigOf(s);
-    return { red: s.red, blue: s.blue, slots: s.slots };
+    const top = game.settings.get(MODULE_ID, "position") === "top";
+    return { red: s.red, blue: s.blue, slots: s.slots, tooltipDir: top ? "DOWN" : "UP" };
   }
 
   protected _onRender(context: unknown, options: unknown): void {

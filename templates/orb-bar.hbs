@@ -1,7 +1,7 @@
 <div class="orb-hud__bar">
   {{#each slots}}
   <div class="orb-hud__slot{{#unless filled}} orb-hud__slot--empty{{/unless}}{{#if broken}} orb-hud__slot--broken{{/if}}{{#if depleted}} orb-hud__slot--depleted{{/if}}" data-slot="{{index}}"
-       {{#if tooltip}}data-tooltip="{{tooltip}}" data-tooltip-direction="UP"{{/if}}{{#if filled}} draggable="true"{{/if}}>
+       {{#if tooltip}}data-tooltip="{{tooltip}}" data-tooltip-direction="{{../tooltipDir}}"{{/if}}{{#if filled}} draggable="true"{{/if}}>
     {{#if img}}<img src="{{img}}" alt="" draggable="false">{{/if}}
     {{#if broken}}<i class="fa-solid fa-triangle-exclamation"></i>{{/if}}
     {{#if key}}<span class="orb-hud__slot-key">{{key}}</span>{{/if}}
