@@ -24,18 +24,17 @@ jobs:
       # Stamp the release tag and this repo's URLs into module.json.
       - name: Update module.json
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          REPO="${{ github.repository }}"
           node -e '
             const fs = require("fs");
             const m = JSON.parse(fs.readFileSync("module.json", "utf8"));
-            m.version = process.env.VERSION;
+            m.version = process.env.VERSION.replace(/^v/, "");
             m.url = `https://github.com/${process.env.REPO}`;
             m.manifest = `https://github.com/${process.env.REPO}/releases/latest/download/module.json`;
             m.download = `https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/module.zip`;
             fs.writeFileSync("module.json", JSON.stringify(m, null, 2) + "\n");
           '
         env:
+          VERSION: ${{ github.ref_name }}
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
 
