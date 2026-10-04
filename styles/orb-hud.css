@@ -263,3 +263,35 @@ body.orb-hud-always-numbers .orb-hud__num { opacity: 1; }
   .orb-hud__trail,
   .orb-hud__shield { transition: none; }
 }
+
+/* ---- Pager (extra ability bar rows) ------------------------------------------------------- */
+
+.orb-hud__pager {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 26px;
+  height: 52px;
+}
+.orb-hud__pager button {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  line-height: 1;
+  font-size: 11px;
+  color: #ddd;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #555;
+  cursor: pointer;
+}
+.orb-hud__pager button:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.orb-hud__page {
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  color: #ccc;
+  font-variant-numeric: tabular-nums;
+}

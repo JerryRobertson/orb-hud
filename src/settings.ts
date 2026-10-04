@@ -37,6 +37,28 @@ export function registerSettings(onOrbsChange: () => void): void {
     onChange: (mode: HotbarMode) => applyHotbarMode(mode)
   });
 
+  const refreshHud = () => (game.modules.get(MODULE_ID) as any).api?.hud?.refresh();
+
+  game.settings.register(MODULE_ID, "barPages", {
+    name: "ORBHUD.Settings.BarPages.Name",
+    hint: "ORBHUD.Settings.BarPages.Hint",
+    scope: "world",
+    config: true,
+    type: Number,
+    range: { min: 1, max: 9, step: 1 },
+    default: 3,
+    onChange: refreshHud
+  });
+
+  // Which page this user is looking at; remembered between sessions.
+  game.settings.register(MODULE_ID, "barPage", {
+    scope: "client",
+    config: false,
+    type: Number,
+    default: 0,
+    onChange: refreshHud
+  });
+
   game.settings.register(MODULE_ID, "gmView", {
     name: "ORBHUD.Settings.GmView.Name",
     hint: "ORBHUD.Settings.GmView.Hint",

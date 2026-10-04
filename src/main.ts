@@ -12,7 +12,10 @@ Hooks.once("init", () => {
   console.log(`${MODULE_ID} | init`);
   registerSettings(() => hud?.refresh());
   registerSceneControl();
-  registerKeybinds((index, event) => hud?.useSlot(index, event) ?? false);
+  registerKeybinds(
+    (index, event) => hud?.useSlot(index, event) ?? false,
+    (delta) => hud?.changePage(delta) ?? false
+  );
   void foundry.applications.handlebars.loadTemplates([
     "modules/orb-hud/templates/source-row.hbs"
   ]);

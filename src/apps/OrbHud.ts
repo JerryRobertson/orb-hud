@@ -5,7 +5,7 @@ import { readSource, type OrbConfig, type ResourceSource } from "../resources";
 import { OrbConfigApp } from "./OrbConfig";
 import { getAdapter } from "../adapters";
 import { SLOT_DRAG_TYPE, getDragData, parseDrop } from "../bar/drop";
-import { getSlots, setSlots, slotViews, type SlotEntry, type SlotView } from "../bar/slots";
+import { MAX_PAGES, SLOT_COUNT, getSlots, setSlots, slotViews, type SlotEntry, type SlotView } from "../bar/slots";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -24,7 +24,13 @@ interface HudState {
   red: OrbView | null;
   blue: OrbView | null;
   slots: SlotView[];
+  page: number;
+  pages: number;
 }
+
+const pageCount = (): number => Math.max(1, Math.min(MAX_PAGES, Number(game.settings.get(MODULE_ID, "barPages")) || 1));
+const currentPage = (): number =>
+  Math.max(0, Math.min(pageCount() - 1, Number(game.settings.get(MODULE_ID, "barPage")) || 0));
 
 type PartId = "red" | "bar" | "blue";
 const fmt = (label: string, r: { value: number; max?: number }) =>
@@ -82,9 +88,11 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #state(): HudState {
     const actor = resolveActor();
-    if (!actor) return { actor: null, red: null, blue: null, slots: [] };
+    const page = currentPage();
+    const pages = pageCount();
+    if (!actor) return { actor: null, red: null, blue: null, slots: [], page, pages };
     const cfg = getOrbSettings(actor);
-    return { actor, red: buildOrb(actor, cfg.red), blue: buildOrb(actor, cfg.blue), slots: slotViews(actor) };
+    return { actor, red: buildOrb(actor, cfg.red), blue: buildOrb(actor, cfg.blue), slots: slotViews(actor, page), page, pages };
   }
 
   static #orbSigOf(s: HudState): string {
@@ -93,7 +101,7 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static #barSigOf(s: HudState): string {
-    return `${s.actor?.uuid ?? "-"}::${s.slots.map((v) => `${v.filled}${v.broken}${v.name}${v.img}${v.badge}${v.depleted}`).join(",")}`;
+    return `${s.actor?.uuid ?? "-"}::${s.page}/${s.pages}::${s.slots.map((v) => `${v.filled}${v.broken}${v.name}${v.img}${v.badge}${v.depleted}`).join(",")}`;
   }
 
   protected async _prepareContext(options: any): Promise<Record<string, unknown>> {
@@ -102,7 +110,14 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
     if (parts.includes("red") || parts.includes("blue")) this.#orbSig = OrbHud.#orbSigOf(s);
     if (parts.includes("bar")) this.#barSig = OrbHud.#barSigOf(s);
     const top = game.settings.get(MODULE_ID, "position") === "top";
-    return { red: s.red, blue: s.blue, slots: s.slots, tooltipDir: top ? "DOWN" : "UP" };
+    return {
+      red: s.red,
+      blue: s.blue,
+      slots: s.slots,
+      tooltipDir: top ? "DOWN" : "UP",
+      showPager: s.pages > 1,
+      pageLabel: `${s.page + 1}/${s.pages}`
+    };
   }
 
   protected _onRender(context: unknown, options: unknown): void {
@@ -133,12 +148,28 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
     });
 
     root.addEventListener("click", (ev) => {
+      const pager = (ev.target as HTMLElement).closest<HTMLElement>("[data-page]");
+      if (pager && ev.button === 0) {
+        this.changePage(Number(pager.dataset.page));
+        return;
+      }
       const slot = slotOf(ev);
       if (!slot || ev.button !== 0) return;
-      const index = Number(slot.dataset.slot);
+      const index = Number(slot.dataset.slot); // absolute
       if (ev.shiftKey) void this.#openSheet(index);
-      else this.useSlot(index, ev);
+      else this.useSlot(index % SLOT_COUNT, ev);
     });
+
+    // Mouse wheel over the bar flips pages.
+    root.addEventListener(
+      "wheel",
+      (ev) => {
+        if (!(ev.target as HTMLElement).closest(".orb-hud__bar") || pageCount() < 2) return;
+        ev.preventDefault();
+        this.changePage(ev.deltaY > 0 ? 1 : -1);
+      },
+      { passive: false }
+    );
 
     root.addEventListener("dragstart", (ev) => {
       const slot = slotOf(ev);
@@ -170,10 +201,19 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
     });
   }
 
-  /** Uses the slotted entry. Returns true when the slot is filled, so keybinds know they consumed the key. */
+  /** Flips the visible page (wrapping around). Returns false when there's only one page. */
+  changePage(delta: number): boolean {
+    const pages = pageCount();
+    if (pages < 2) return false;
+    const next = (currentPage() + delta + pages) % pages;
+    void game.settings.set(MODULE_ID, "barPage", next);
+    return true;
+  }
+
+  /** Uses a slot on the visible page (index 0-9). Returns true when it's filled, so keybinds know they consumed the key. */
   useSlot(index: number, event?: Event): boolean {
     const actor = resolveActor();
-    const entry = actor ? getSlots(actor)[index] : null;
+    const entry = actor ? getSlots(actor)[currentPage() * SLOT_COUNT + index] : null;
     if (!actor || !entry) return false;
     void this.#activate(actor, entry, event);
     return true;

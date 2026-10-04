@@ -8,4 +8,11 @@
     {{#if badge}}<span class="orb-hud__slot-badge">{{badge}}</span>{{/if}}
   </div>
   {{/each}}
+  {{#if showPager}}
+  <div class="orb-hud__pager">
+    <button type="button" data-page="-1" data-tooltip="{{localize 'ORBHUD.Bar.PageUp'}}" data-tooltip-direction="{{tooltipDir}}"><i class="fa-solid fa-chevron-up"></i></button>
+    <span class="orb-hud__page">{{pageLabel}}</span>
+    <button type="button" data-page="1" data-tooltip="{{localize 'ORBHUD.Bar.PageDown'}}" data-tooltip-direction="{{tooltipDir}}"><i class="fa-solid fa-chevron-down"></i></button>
+  </div>
+  {{/if}}
 </div>
