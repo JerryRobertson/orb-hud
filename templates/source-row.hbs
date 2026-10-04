@@ -1,0 +1,14 @@
+<div class="orb-hud-cfg__row" data-row data-orb="{{orb}}" data-role="{{role}}" data-idx="{{idx}}">
+  <select data-field="pick">
+    {{#each groups}}
+    <optgroup label="{{label}}">
+      {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+    </optgroup>
+    {{/each}}
+  </select>
+  <input type="text" data-field="valuePath" value="{{valuePath}}" placeholder="{{localize 'ORBHUD.Config.ValuePath'}}" {{#if isItem}}hidden{{/if}}>
+  <input type="text" data-field="maxPath" value="{{maxPath}}" placeholder="{{localize 'ORBHUD.Config.MaxPath'}}" {{#if isItem}}hidden{{/if}}>
+  {{#if isShield}}<input type="text" data-field="label" value="{{label}}" placeholder="{{localize 'ORBHUD.Config.ShieldLabel'}}">{{/if}}
+  <span class="orb-hud-cfg__live" data-field="live">{{live}}</span>
+  {{#if isShield}}<button type="button" data-action="removeShield" data-idx="{{idx}}" title="{{localize 'ORBHUD.Config.Remove'}}"><i class="fa-solid fa-trash"></i></button>{{/if}}
+</div>

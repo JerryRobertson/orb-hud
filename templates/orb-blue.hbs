@@ -1,0 +1,9 @@
+{{#if blue}}
+<div class="orb-hud__orb orb-hud__orb--blue{{#if blue.counter}} orb-hud__orb--counter{{/if}}" data-orb="blue"
+     style="--fill: {{blue.pct}}; --orb-color: {{blue.color}};" title="{{blue.tooltip}}">
+  <div class="orb-hud__trail"></div>
+  <div class="orb-hud__liquid"><svg class="orb-hud__wave" viewBox="0 0 240 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q15 0 30 5 T60 5 T90 5 T120 5 T150 5 T180 5 T210 5 T240 5 V10 H0 Z"/></svg></div>
+  <div class="orb-hud__glass"></div>
+  <span class="orb-hud__num"><div class="orb-hud__num-main">{{blue.text}}</div></span>
+</div>
+{{else}}<div class="orb-hud__orb orb-hud__orb--empty"></div>{{/if}}

@@ -1,0 +1,31 @@
+import type { SlotEntry } from "../bar/slots";
+import { dnd5e } from "./dnd5e";
+import { generic } from "./generic";
+import { pf2e } from "./pf2e";
+
+export interface UseContext {
+  actor: any;
+  event?: Event;
+}
+
+export interface Usage {
+  /** Badge text, e.g. remaining uses or quantity. */
+  text: string;
+  depleted: boolean;
+}
+
+export interface Adapter {
+  /** Turns system-specific drag data (e.g. PF2e strikes) into a slot entry, or null if unsupported. */
+  convertDrop?(data: any, actor: any): Promise<SlotEntry | null>;
+  /** Uses the slotted document. */
+  use?(doc: any, ctx: UseContext): Promise<void>;
+  /** Remaining uses / quantity for the badge. */
+  usage?(doc: any): Usage | null;
+  /** Short cost label for the tooltip (e.g. "1 Action"). */
+  cost?(doc: any): string | null;
+}
+
+const SYSTEMS: Record<string, Adapter> = { dnd5e, pf2e };
+
+/** The generic adapter works everywhere; system adapters override only what they need. */
+export const getAdapter = (): Adapter => ({ ...generic, ...(SYSTEMS[game.system.id] ?? {}) });

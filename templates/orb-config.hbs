@@ -1,0 +1,29 @@
+<div class="orb-hud-cfg">
+  <p class="orb-hud-cfg__note">{{scopeNote}}</p>
+  <p class="orb-hud-cfg__note">{{localize "ORBHUD.Config.SampleActor"}}: {{#if sampleName}}<strong>{{sampleName}}</strong>{{else}}<em>{{localize "ORBHUD.Config.NoSample"}}</em>{{/if}}</p>
+
+  {{#each orbs}}
+  <fieldset class="orb-hud-cfg__orb">
+    <legend>{{title}}</legend>
+    <div class="orb-hud-cfg__line">
+      <label>{{localize "ORBHUD.Config.Label"}} <input type="text" data-orb-field="label" data-orb="{{key}}" value="{{label}}"></label>
+      <label>{{localize "ORBHUD.Config.Colour"}} <input type="color" data-orb-field="color" data-orb="{{key}}" value="{{color}}"></label>
+    </div>
+    <h4>{{localize "ORBHUD.Config.Source"}}</h4>
+    {{> "modules/orb-hud/templates/source-row.hbs" main}}
+    {{#if isRed}}
+    <h4>{{localize "ORBHUD.Config.Shields"}}</h4>
+    <div class="orb-hud-cfg__line">
+      <label>{{localize "ORBHUD.Config.ShieldColour"}} <input type="color" data-orb-field="shieldColor" data-orb="red" value="{{shieldColor}}"></label>
+    </div>
+    {{#each shields}}{{> "modules/orb-hud/templates/source-row.hbs" this}}{{/each}}
+    <button type="button" data-action="addShield"><i class="fa-solid fa-plus"></i> {{localize "ORBHUD.Config.AddShield"}}</button>
+    {{/if}}
+  </fieldset>
+  {{/each}}
+
+  <footer class="orb-hud-cfg__footer">
+    {{#if canReset}}<button type="button" data-action="reset"><i class="fa-solid fa-rotate-left"></i> {{localize "ORBHUD.Config.Reset"}}</button>{{/if}}
+    <button type="button" data-action="save"><i class="fa-solid fa-floppy-disk"></i> {{localize "ORBHUD.Config.Save"}}</button>
+  </footer>
+</div>

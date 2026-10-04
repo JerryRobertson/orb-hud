@@ -1,0 +1,11 @@
+{
+  "id": "orb-hud",
+  "title": "Orb HUD",
+  "description": "A system-agnostic HUD with health and resource orbs and a drag-and-drop ability bar.",
+  "version": "0.1.0",
+  "compatibility": { "minimum": "13", "verified": "14" },
+  "authors": [{ "name": "Jerry" }],
+  "esmodules": ["dist/orb-hud.js"],
+  "styles": ["styles/orb-hud.css"],
+  "languages": [{ "lang": "en", "name": "English", "path": "lang/en.json" }]
+}

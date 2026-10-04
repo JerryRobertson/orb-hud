@@ -1,0 +1,10 @@
+{{#if red}}
+<div class="orb-hud__orb orb-hud__orb--red{{#if red.counter}} orb-hud__orb--counter{{/if}}{{#if red.shield.active}} orb-hud__orb--shielded{{/if}}" data-orb="red"
+     style="--fill: {{red.pct}}; --orb-color: {{red.color}};{{#if red.shield}} --shield-width: {{red.shield.width}}; --shield-color: {{red.shield.color}};{{/if}}" title="{{red.tooltip}}">
+  <div class="orb-hud__trail"></div>
+  <div class="orb-hud__liquid"><svg class="orb-hud__wave" viewBox="0 0 240 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q15 0 30 5 T60 5 T90 5 T120 5 T150 5 T180 5 T210 5 T240 5 V10 H0 Z"/></svg></div>
+  {{#if red.shield}}<div class="orb-hud__shield"></div><svg class="orb-hud__crack" viewBox="0 0 100 100" aria-hidden="true"><path d="M52 2 L44 28 L58 42 L40 62 L55 76 L46 98 M44 28 L20 38 M58 42 L82 34 M40 62 L16 72 M55 76 L80 84"/></svg>{{/if}}
+  <div class="orb-hud__glass"></div>
+  <span class="orb-hud__num"><div class="orb-hud__num-main">{{red.text}}</div>{{#if red.shield}}<div class="orb-hud__num-shields">{{#each red.shield.lines}}<div>{{this}}</div>{{/each}}</div>{{/if}}</span>
+</div>
+{{else}}<div class="orb-hud__orb orb-hud__orb--empty"></div>{{/if}}

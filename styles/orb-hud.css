@@ -1,0 +1,257 @@
+:root {
+  --orb-hud-red: #b3202a;
+  --orb-hud-blue: #2a5fc4;
+  --orb-hud-glass: rgba(255, 255, 255, 0.18);
+  --orb-hud-size: 120px;
+  --orb-hud-scale: 1;
+  --orb-hud-fill-duration: 1200ms;
+  --orb-hud-trail-delay: 600ms;
+}
+
+/* ---- Layout ------------------------------------------------------------------------------- */
+
+#orb-hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1rem;
+  pointer-events: none;
+  transform: scale(var(--orb-hud-scale));
+  transform-origin: bottom center;
+}
+#orb-hud.orb-hud--hidden { display: none; }
+
+#orb-hud .orb-hud__orb,
+#orb-hud .orb-hud__bar { pointer-events: auto; }
+
+/* Core hotbar handling (client setting "hotbarMode") */
+body.orb-hud-hide-hotbar #hotbar { display: none; }
+body.orb-hud-shift-hotbar #hotbar {
+  transform: translateY(calc(-1 * (var(--orb-hud-size) + 1rem) * var(--orb-hud-scale)));
+}
+
+/* ---- Orbs --------------------------------------------------------------------------------- */
+
+.orb-hud__orb {
+  position: relative;
+  flex: none;
+  width: var(--orb-hud-size);
+  height: var(--orb-hud-size);
+  border-radius: 50%;
+  overflow: hidden;
+  background: #120a0c;
+  border: 2px solid var(--orb-color, #555);
+  box-shadow: inset 0 0 14px #000;
+}
+.orb-hud__orb--empty { visibility: hidden; }
+.orb-hud__orb[title] { cursor: context-menu; }
+
+.orb-hud__liquid {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--orb-color) 70%, white), var(--orb-color) 40%, color-mix(in srgb, var(--orb-color) 55%, black));
+  transform: translateY(calc((100 - var(--fill, 0)) * 1%));
+  transition: transform var(--orb-hud-fill-duration) ease-in-out;
+}
+
+/* Damage trail: a paler layer under the fill that lags behind it, so a hit shows what was lost.
+   When healing, the fill moves above the trail and hides it. */
+.orb-hud__trail {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--orb-color) 35%, white);
+  opacity: 0.8;
+  transform: translateY(calc((100 - var(--fill, 0)) * 1%));
+  transition: transform var(--orb-hud-fill-duration) ease-in-out var(--orb-hud-trail-delay);
+}
+
+/* Liquid surface */
+.orb-hud__wave {
+  position: absolute;
+  left: 0;
+  top: -9px;
+  width: 200%;
+  height: 10px;
+  fill: color-mix(in srgb, var(--orb-color) 70%, white);
+  opacity: clamp(0, calc(var(--fill, 0) / 2), 1);
+  animation: orb-hud-wave 4s linear infinite;
+  pointer-events: none;
+}
+@keyframes orb-hud-wave {
+  to { transform: translateX(-50%); }
+}
+
+.orb-hud__glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 32% 25%, var(--orb-hud-glass), transparent 45%);
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.55);
+}
+
+/* ---- Energy shield ------------------------------------------------------------------------ */
+/* A frosty layer that "eats" the health from the right. --shield-width is how far the feathered
+   front has advanced (a registered property, so it animates smoothly). */
+
+@property --shield-width {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+.orb-hud__shield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    /* ice cracks */
+    repeating-linear-gradient(115deg, transparent 0 22px, rgba(255, 255, 255, 0.28) 22px 23px, transparent 23px 41px),
+    repeating-linear-gradient(65deg, transparent 0 31px, rgba(255, 255, 255, 0.2) 31px 32px, transparent 32px 57px),
+    /* vertical streaks */
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 4px),
+    /* frosty glow, brightest at the advancing front */
+    linear-gradient(to left, color-mix(in srgb, var(--shield-color, #7fd4ff) 85%, transparent), color-mix(in srgb, var(--shield-color, #7fd4ff) 95%, white));
+  /* Feathered front edge that advances from the right as --shield-width grows. */
+  -webkit-mask-image: linear-gradient(to left, #000 calc(var(--shield-width) - 10%), transparent calc(var(--shield-width) + 1%));
+  mask-image: linear-gradient(to left, #000 calc(var(--shield-width) - 10%), transparent calc(var(--shield-width) + 1%));
+  transition: --shield-width var(--orb-hud-fill-duration) ease-in-out, opacity 300ms;
+}
+.orb-hud__orb--shielded .orb-hud__shield { opacity: 1; }
+
+/* Shimmer while it holds */
+.orb-hud__shield::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%);
+  background-size: 250% 100%;
+  mix-blend-mode: screen;
+  animation: orb-hud-shimmer 3s linear infinite;
+}
+@keyframes orb-hud-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -150% 0; }
+}
+
+/* Crack-and-fade when it breaks */
+.orb-hud__crack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: color-mix(in srgb, var(--shield-color, #7fd4ff) 40%, white);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  pointer-events: none;
+}
+.orb-hud__orb--cracking .orb-hud__crack { animation: orb-hud-crack 1s ease-out; }
+.orb-hud__orb--cracking .orb-hud__shield { animation: orb-hud-shatter 1s ease-out; }
+@keyframes orb-hud-crack {
+  0% { opacity: 0; transform: scale(0.92); }
+  15% { opacity: 1; transform: scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes orb-hud-shatter {
+  0% { opacity: 1; filter: brightness(2); }
+  100% { opacity: 0; filter: brightness(1); }
+}
+
+/* ---- Numbers ------------------------------------------------------------------------------ */
+
+.orb-hud__num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 4px #000, 0 0 2px #000;
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+}
+.orb-hud__orb:hover .orb-hud__num,
+.orb-hud__orb--counter .orb-hud__num,
+body.orb-hud-always-numbers .orb-hud__num { opacity: 1; }
+.orb-hud__num-shields { color: color-mix(in srgb, var(--shield-color, #7fd4ff) 60%, white); font-size: 0.9em; }
+
+/* ---- Ability bar -------------------------------------------------------------------------- */
+
+.orb-hud__bar {
+  display: flex;
+  flex-direction: row;
+  flex: none;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #444;
+  background: rgba(0, 0, 0, 0.55);
+}
+.orb-hud__slot {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid #555;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+.orb-hud__slot img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.orb-hud__slot:not(.orb-hud__slot--empty) { cursor: pointer; }
+.orb-hud__slot--broken { border-color: #d22; background: rgba(210, 34, 34, 0.25); }
+.orb-hud__slot--depleted img { filter: grayscale(1) brightness(0.55); }
+.orb-hud__slot-key,
+.orb-hud__slot-badge {
+  position: absolute;
+  padding: 0 3px;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  text-shadow: 0 0 2px #000;
+  pointer-events: none;
+}
+.orb-hud__slot-key { top: 0; left: 0; }
+.orb-hud__slot-badge { right: 0; bottom: 0; }
+
+/* ---- Config app --------------------------------------------------------------------------- */
+
+.orb-hud-cfg { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; }
+.orb-hud-cfg__note { margin: 0; font-size: 0.85em; opacity: 0.8; }
+.orb-hud-cfg__orb { display: flex; flex-direction: column; gap: 0.4rem; }
+.orb-hud-cfg h4 { margin: 0.3rem 0 0; }
+.orb-hud-cfg__line { display: flex; gap: 1rem; align-items: center; }
+.orb-hud-cfg__row { display: flex; gap: 0.4rem; align-items: center; }
+.orb-hud-cfg__row select { flex: 1.4; min-width: 0; }
+.orb-hud-cfg__row input[type="text"] { flex: 1; min-width: 0; }
+.orb-hud-cfg__live { min-width: 5rem; text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
+.orb-hud-cfg__footer { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+/* ---- Reduced motion ----------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-hud__wave,
+  .orb-hud__shield::after,
+  .orb-hud__orb--cracking .orb-hud__crack,
+  .orb-hud__orb--cracking .orb-hud__shield { animation: none; }
+  .orb-hud__liquid,
+  .orb-hud__trail,
+  .orb-hud__shield { transition: none; }
+}
