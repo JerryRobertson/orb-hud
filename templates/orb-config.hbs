@@ -9,6 +9,10 @@
       <label>{{localize "ORBHUD.Config.Label"}} <input type="text" data-orb-field="label" data-orb="{{key}}" value="{{label}}"></label>
       <label>{{localize "ORBHUD.Config.Colour"}} <input type="color" data-orb-field="color" data-orb="{{key}}" value="{{color}}"></label>
     </div>
+    <label class="orb-hud-cfg__check" title="{{localize 'ORBHUD.Config.HideWhenEmptyHint'}}">
+      <input type="checkbox" data-orb-field="hideWhenEmpty" data-orb="{{key}}" {{#if hideWhenEmpty}}checked{{/if}}>
+      {{localize "ORBHUD.Config.HideWhenEmpty"}}
+    </label>
     <h4>{{localize "ORBHUD.Config.Source"}}</h4>
     {{> "modules/orb-hud/templates/source-row.hbs" main}}
     {{#if isRed}}

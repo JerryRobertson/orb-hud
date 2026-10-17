@@ -16,6 +16,11 @@ export interface OrbConfig {
   /** Red orb only: protective pools drained before health, summed into the shell. */
   shields?: ResourceSource[];
   shieldColor?: string;
+  /**
+   * Hide the orb when its source defines a max but that max is missing or below 1
+   * (e.g. no mana or focus pool). Sources with no max path are deliberate counters and never hide.
+   */
+  hideWhenEmpty?: boolean;
   /** Labelled mini-bars shown above the orb (e.g. worn armor). Informational: they don't count toward the shield. */
   gauges?: ResourceSource[];
 }

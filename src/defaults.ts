@@ -13,14 +13,14 @@ const BY_SYSTEM: Record<string, OrbSettings> = {
       label: "HP", color: RED, main: hp("attributes.hp.value", "attributes.hp.max"),
       shields: [{ kind: "attribute", valuePath: "attributes.hp.temp", label: "Temp HP" }], shieldColor: SHIELD
     },
-    blue: { label: "Spell Slots (1st)", color: BLUE, main: hp("spells.spell1.value", "spells.spell1.max") }
+    blue: { label: "Spell Slots (1st)", color: BLUE, main: hp("spells.spell1.value", "spells.spell1.max"), hideWhenEmpty: true }
   },
   pf2e: {
     red: {
       label: "HP", color: RED, main: hp("attributes.hp.value", "attributes.hp.max"),
       shields: [{ kind: "attribute", valuePath: "attributes.hp.temp", label: "Temp HP" }], shieldColor: SHIELD
     },
-    blue: { label: "Focus", color: BLUE, main: hp("resources.focus.value", "resources.focus.max") }
+    blue: { label: "Focus", color: BLUE, main: hp("resources.focus.value", "resources.focus.max"), hideWhenEmpty: true }
   },
   "heroes-unlimited": {
     red: {
@@ -33,7 +33,7 @@ const BY_SYSTEM: Record<string, OrbSettings> = {
         { kind: "itemPool", itemType: "armor", valuePath: "sdc.value", maxPath: "sdc.max", activeWhen: "equipped,isNatural", label: "Armour" }
       ]
     },
-    blue: { label: "P.P.E.", color: BLUE, main: hp("ppe.value", "_totalPpeMax|ppe.max") }
+    blue: { label: "P.P.E.", color: BLUE, main: hp("ppe.value", "_totalPpeMax|ppe.max"), hideWhenEmpty: true }
   }
 };
 

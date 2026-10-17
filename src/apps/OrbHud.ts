@@ -47,6 +47,9 @@ const fmt = (label: string, r: { value: number; max?: number }) =>
 function buildOrb(actor: any, cfg: OrbConfig): OrbView | null {
   const r = readSource(actor, cfg.main);
   if (!r) return null;
+  // Optional: hide an orb whose max is 0, missing or otherwise below 1 (e.g. a martial character's mana).
+  const definesMax = cfg.main.kind === "attribute" ? !!cfg.main.maxPath : true;
+  if (cfg.hideWhenEmpty && definesMax && !((r.max ?? 0) >= 1)) return null;
   const counter = r.max === undefined;
   const pct = counter ? 100 : r.max! > 0 ? Math.min(100, Math.max(0, (r.value / r.max!) * 100)) : 0;
   const text = counter ? `${r.value}` : `${r.value} / ${r.max}`;

@@ -151,6 +151,7 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
         label: cfg.label,
         color: cfg.color,
         shieldColor: cfg.shieldColor ?? "#7fd4ff",
+        hideWhenEmpty: !!cfg.hideWhenEmpty,
         main: this.#rowCtx(cfg.main, key, "main", 0, tracked),
         shields: (cfg.shields ?? []).map((s, i) => this.#rowCtx(s, key, "shield", i, tracked)),
         gauges: (cfg.gauges ?? []).map((g, i) => this.#rowCtx(g, key, "gauge", i, tracked))
@@ -204,6 +205,8 @@ export class OrbConfigApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const field = (f: string) => root.querySelector<HTMLInputElement>(`[data-orb-field="${f}"][data-orb="${key}"]`);
       cfg.label = field("label")?.value.trim() || cfg.label;
       cfg.color = field("color")?.value || cfg.color;
+      const hide = !!field("hideWhenEmpty")?.checked;
+      if (hide || cfg.hideWhenEmpty !== undefined) cfg.hideWhenEmpty = hide; // don't add a key the default lacks
       cfg.main = this.#readRow(root.querySelector<HTMLElement>(`[data-row][data-orb="${key}"][data-role="main"]`)!);
       const gauges = [...root.querySelectorAll<HTMLElement>(`[data-row][data-orb="${key}"][data-role="gauge"]`)].map((r) => this.#readRow(r));
       if (gauges.length || cfg.gauges) cfg.gauges = gauges; // don't add an empty list the world default doesn't have
