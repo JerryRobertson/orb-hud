@@ -3,6 +3,7 @@ import { MODULE_ID } from "../constants";
 import { editableOrbs, getOrbSettings } from "../orb-settings";
 import { readSource, type OrbConfig, type ResourceSource } from "../resources";
 import { OrbConfigApp } from "./OrbConfig";
+import { isBarHidden } from "../settings";
 import { getAdapter } from "../adapters";
 import { SLOT_DRAG_TYPE, getDragData, parseDrop } from "../bar/drop";
 import { MAX_PAGES, SLOT_COUNT, getSlots, setSlots, slotViews, type SlotEntry, type SlotView } from "../bar/slots";
@@ -219,7 +220,7 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Flips the visible page (wrapping around). Returns false when there's only one page. */
   changePage(delta: number): boolean {
     const pages = pageCount();
-    if (pages < 2) return false;
+    if (pages < 2 || isBarHidden()) return false;
     const next = (currentPage() + delta + pages) % pages;
     void game.settings.set(MODULE_ID, "barPage", next);
     return true;
@@ -227,6 +228,7 @@ export class OrbHud extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Uses a slot on the visible page (index 0-9). Returns true when it's filled, so keybinds know they consumed the key. */
   useSlot(index: number, event?: Event): boolean {
+    if (isBarHidden()) return false; // a hidden bar shouldn't fire its keys
     const actor = resolveActor();
     const entry = actor ? getSlots(actor)[currentPage() * SLOT_COUNT + index] : null;
     if (!actor || !entry) return false;

@@ -352,3 +352,8 @@ body.orb-hud-always-numbers .orb-hud__gauges { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .orb-hud__gauge-bar i { transition: none; }
 }
+
+/* ---- Visibility (client setting "visibility") ------------------------------------------- */
+/* Orbs hidden: remove them so the bar stays centred. Bar hidden: keep its space so the orbs stay put. */
+body.orb-hud-hide-orbs .orb-hud__orbwrap { display: none; }
+body.orb-hud-hide-bar .orb-hud__bar { visibility: hidden; }

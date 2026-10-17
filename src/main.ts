@@ -1,7 +1,7 @@
 import { OrbHud } from "./apps/OrbHud";
 import { OrbConfigApp } from "./apps/OrbConfig";
 import { MODULE_ID } from "./constants";
-import { applyClientSettings, registerSettings } from "./settings";
+import { applyClientSettings, getVisibility, registerSettings, toggleHud } from "./settings";
 import { resolveActor } from "./actor-resolver";
 import { editableOrbs } from "./orb-settings";
 import { registerKeybinds } from "./keybinds";
@@ -14,17 +14,17 @@ Hooks.once("init", () => {
   registerSceneControl();
   registerKeybinds(
     (index, event) => hud?.useSlot(index, event) ?? false,
-    (delta) => hud?.changePage(delta) ?? false
+    (delta) => hud?.changePage(delta) ?? false,
+    toggleHud
   );
   void foundry.applications.handlebars.loadTemplates([
     "modules/orb-hud/templates/source-row.hbs"
   ]);
 });
 
-/** GM-only toggle in the token controls: show or hide the HUD for the GM. */
+/** Toggle in the token controls (everyone): hide the HUD, or bring back what was showing. */
 function registerSceneControl(): void {
   Hooks.on("getSceneControlButtons", (controls: any) => {
-    if (!game.user.isGM) return;
     const tokens = Array.isArray(controls) ? controls.find((c: any) => c.name === "tokens") : controls.tokens;
     if (!tokens) return;
     const tool = {
@@ -32,9 +32,11 @@ function registerSceneControl(): void {
       title: "ORBHUD.Controls.Toggle",
       icon: "fa-solid fa-circle-half-stroke",
       toggle: true,
-      active: game.settings.get(MODULE_ID, "gmView"),
+      active: getVisibility() !== "none",
       order: 99,
-      onChange: (_event: unknown, active: boolean) => game.settings.set(MODULE_ID, "gmView", active)
+      onChange: (_event: unknown, active: boolean) => {
+        if (active !== (getVisibility() !== "none")) toggleHud();
+      }
     };
     if (Array.isArray(tokens.tools)) tokens.tools.push(tool);
     else tokens.tools.orbHud = tool;

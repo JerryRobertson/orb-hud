@@ -6,8 +6,14 @@ const DEFAULT_KEYS = ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "Digit1", "Digit2"
 /** Registers one rebindable key per slot. `use` returns true when it consumed the key. */
 export function registerKeybinds(
   use: (index: number, event: Event | undefined) => boolean,
-  changePage: (delta: number) => boolean
+  changePage: (delta: number) => boolean,
+  toggleHud: () => boolean
 ): void {
+  game.keybindings.register(MODULE_ID, "toggleHud", {
+    name: "ORBHUD.Keys.ToggleHud",
+    editable: [],
+    onDown: () => toggleHud()
+  });
   // Unbound by default; players can assign keys under Configure Controls.
   game.keybindings.register(MODULE_ID, "pageUp", {
     name: "ORBHUD.Keys.PagePrev",

@@ -17,6 +17,31 @@ function applyScale(percent: number): void {
   document.documentElement.style.setProperty("--orb-hud-scale", String(percent / 100));
 }
 
+export type Visibility = "both" | "orbs" | "bar" | "none";
+
+/** "orbs" means orbs only (bar hidden); "bar" means bar only (orbs hidden); "none" is handled by the HUD hiding itself. */
+function applyVisibility(v: Visibility): void {
+  document.body.classList.toggle("orb-hud-hide-bar", v === "orbs");
+  document.body.classList.toggle("orb-hud-hide-orbs", v === "bar");
+}
+
+export const getVisibility = (): Visibility => game.settings.get(MODULE_ID, "visibility") as Visibility;
+
+/** True when the ability bar is not visible, so its keys and paging should be inactive. */
+export const isBarHidden = (): boolean => ["orbs", "none"].includes(getVisibility());
+
+/** Hide everything, or bring back whatever was showing before. Returns true (so it can be a keybind handler). */
+export function toggleHud(): boolean {
+  const current = getVisibility();
+  if (current === "none") {
+    void game.settings.set(MODULE_ID, "visibility", game.settings.get(MODULE_ID, "lastVisibility") || "both");
+  } else {
+    void game.settings.set(MODULE_ID, "lastVisibility", current);
+    void game.settings.set(MODULE_ID, "visibility", "none");
+  }
+  return true;
+}
+
 function applyPosition(position: "bottom" | "top"): void {
   document.body.classList.toggle("orb-hud-top", position === "top");
 }
@@ -59,18 +84,31 @@ export function registerSettings(onOrbsChange: () => void): void {
     onChange: refreshHud
   });
 
-  game.settings.register(MODULE_ID, "gmView", {
-    name: "ORBHUD.Settings.GmView.Name",
-    hint: "ORBHUD.Settings.GmView.Hint",
+  game.settings.register(MODULE_ID, "visibility", {
+    name: "ORBHUD.Settings.Visibility.Name",
+    hint: "ORBHUD.Settings.Visibility.Hint",
     scope: "client",
-    config: true, // game.user doesn't exist yet during init; the setting is simply a no-op for players
-    type: Boolean,
-    default: true,
-    onChange: () => {
-      (game.modules.get(MODULE_ID) as any).api?.hud?.refresh();
+    config: true,
+    type: String,
+    default: "both",
+    choices: {
+      both: "ORBHUD.Settings.Visibility.Both",
+      orbs: "ORBHUD.Settings.Visibility.Orbs",
+      bar: "ORBHUD.Settings.Visibility.Bar",
+      none: "ORBHUD.Settings.Visibility.None"
+    },
+    onChange: (v: Visibility) => {
+      applyVisibility(v);
+      refreshHud();
       ui.controls?.render();
     }
   });
+
+  // What the toggle restores when un-hiding.
+  game.settings.register(MODULE_ID, "lastVisibility", { scope: "client", config: false, type: String, default: "both" });
+
+  // Legacy GM-only on/off switch from v1.2; migrated to "visibility" on first load.
+  game.settings.register(MODULE_ID, "gmView", { scope: "client", config: false, type: Boolean, default: true });
 
   game.settings.register(MODULE_ID, "position", {
     name: "ORBHUD.Settings.Position.Name",
@@ -144,6 +182,12 @@ export function registerSettings(onOrbsChange: () => void): void {
 }
 
 export function applyClientSettings(): void {
+  // Migrate the old GM-only switch: someone who had the HUD turned off keeps it off.
+  if (game.settings.get(MODULE_ID, "gmView") === false) {
+    void game.settings.set(MODULE_ID, "visibility", "none");
+    void game.settings.set(MODULE_ID, "gmView", true);
+  }
+  applyVisibility(getVisibility());
   applyPosition(game.settings.get(MODULE_ID, "position") as "bottom" | "top");
   applyScale(game.settings.get(MODULE_ID, "scale") as number);
   applyAlwaysNumbers(game.settings.get(MODULE_ID, "alwaysNumbers") as boolean);
