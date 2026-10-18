@@ -1,3 +1,5 @@
+import { getAdapter } from "./adapters";
+
 export type ResourceSource = (
   | { kind: "attribute"; valuePath: string; maxPath?: string }
   | { kind: "itemUses"; itemName: string }
@@ -52,8 +54,12 @@ export function readSource(actor: any, source: ResourceSource): ResourceReading 
     if (!source.maxPath) return { value };
     // maxPath may list fallbacks separated by "|"; the first one that exists wins
     // (e.g. a derived total, then the base value).
-    for (const path of source.maxPath.split("|")) {
-      const max = num(foundry.utils.getProperty(actor.system, path.trim()));
+    for (const raw of source.maxPath.split("|")) {
+      const path = raw.trim();
+      // Systems whose stored max is just a base value resolve the effective total here.
+      const effective = getAdapter().effectiveMax?.(actor, path);
+      if (typeof effective === "number" && Number.isFinite(effective)) return { value, max: effective };
+      const max = num(foundry.utils.getProperty(actor.system, path));
       if (max !== null) return { value, max };
     }
     return { value };

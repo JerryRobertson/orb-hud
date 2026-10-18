@@ -24,6 +24,12 @@ export interface PoolPreset {
 
 export interface Adapter {
   /**
+   * Resolve a max path to the actor's effective value, or null to read the path normally. Lets a system whose
+   * stored max is only a base value (bonuses and alternate forms are applied later) fix configs that point at
+   * the base path, without the GM having to reconfigure anything.
+   */
+  effectiveMax?(actor: any, maxPath: string): number | null;
+  /**
    * Max path to use when the GM picks a tracked bar. Systems that add bonuses in derived data
    * (so the "base" `<bar>.max` is too low) return their effective-total path; null means `<bar>.max`.
    */

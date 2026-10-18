@@ -12,6 +12,21 @@ const TOTAL_MAX: Record<string, string> = {
 };
 
 export const heroesUnlimited: Adapter = {
+  /**
+   * Stored `<pool>.max` is the permanent base form; power categories, skills, levels and alternate forms
+   * (e.g. Alter Physical Structure) are layered on top in derived data. The system exposes the real ceiling
+   * through HUActor#effectiveVitalMax, so any config pointing at `hp.max`, `sdc.max`, `ppe.max` or `isp.max`
+   * (including ones saved before this was handled) reads the effective value.
+   */
+  effectiveMax(actor, maxPath) {
+    const key = /^(hp|sdc|ppe|isp)\.max$/.exec(maxPath)?.[1];
+    if (!key) return null;
+    const effective =
+      typeof actor.effectiveVitalMax === "function"
+        ? actor.effectiveVitalMax(key)
+        : actor.system?.[`_total${key[0].toUpperCase()}${key.slice(1)}Max`];
+    return typeof effective === "number" ? effective : null;
+  },
   /** Prefer the derived total, falling back to the base box. */
   barMax: (bar) => (TOTAL_MAX[bar] ? `${TOTAL_MAX[bar]}|${bar}.max` : null),
   poolPresets: [
